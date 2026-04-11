@@ -24,3 +24,26 @@ uv run alembic upgrade head
 # Generate a new migration from model changes
 uv run alembic revision --autogenerate -m "describe change"
 ```
+
+## Integration tests (Postgres required)
+
+Integration tests under `tests/integration/` require a live PostgreSQL 16
+reachable at `BC_DATABASE_URL`. Without it, the tests skip cleanly (marked
+via `@pytest.mark.integration` + a reachability probe in
+`tests/integration/conftest.py`).
+
+Quick local setup with Docker:
+
+```bash
+docker run --name bcms-pg -d \
+    -e POSTGRES_USER=bcms -e POSTGRES_PASSWORD=bcms \
+    -e POSTGRES_DB=bcms_test -p 5432:5432 postgres:16
+
+export BC_DATABASE_URL="postgresql+asyncpg://bcms:bcms@localhost:5432/bcms_test"
+uv run alembic upgrade head
+uv run pytest tests/integration -q
+```
+
+All other `BC_*` variables have sensible defaults for local development;
+tests seed the minimum set via `tests/conftest.py`.
+
