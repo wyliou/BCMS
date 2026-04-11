@@ -238,8 +238,24 @@ async def test_import_actuals_empty_file_raises(
     assert exc_info.value.code == "ACCOUNT_002"
 
 
-@pytest.mark.skip(
-    reason="Cycle state check wired lazily — Batch 4 ships CycleService and the real test"
-)
-async def test_import_actuals_closed_cycle_raises_cycle_004() -> None:
+async def test_import_actuals_closed_cycle_raises_cycle_004(
+    account_service: Any,
+    system_admin: Any,
+) -> None:
     """Closed cycle → raises CYCLE_004 before any file parsing (Batch 4)."""
+    from app.core.errors import AppError
+
+    class _ClosedAsserter:
+        async def assert_open(self, cycle_id: Any) -> None:
+            raise AppError("CYCLE_004", f"Cycle {cycle_id} is not open")
+
+    cycle_id = uuid4()
+    with pytest.raises(AppError) as exc_info:
+        await account_service.import_actuals(
+            cycle_id=cycle_id,
+            filename="actuals.csv",
+            content=b"org_unit_code,account_code,amount\n",
+            user=system_admin,
+            cycle_service=_ClosedAsserter(),
+        )
+    assert exc_info.value.code == "CYCLE_004"

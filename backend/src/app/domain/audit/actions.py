@@ -44,6 +44,8 @@ class AuditAction(StrEnum):
     CYCLE_CLOSE = "CYCLE_CLOSE"
     CYCLE_REOPEN = "CYCLE_REOPEN"
     CYCLE_CREATE = "CYCLE_CREATE"
+    CYCLE_REMINDER_SET = "CYCLE_REMINDER_SET"
+    FILING_UNIT_EXCLUDED = "FILING_UNIT_EXCLUDED"
 
     # --- templates ---------------------------------------------------------
     TEMPLATE_DOWNLOAD = "TEMPLATE_DOWNLOAD"

@@ -20,6 +20,7 @@ Real Postgres round-trips live in
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from datetime import date, datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -127,6 +128,32 @@ class FakeSession:
 
     async def close(self) -> None:
         """No-op close."""
+        return None
+
+    async def get(self, model: Any, pk: Any) -> Any:
+        """Minimal ``AsyncSession.get`` stand-in.
+
+        Returns a stub :class:`BudgetCycle` row with ``status='open'`` so
+        that Batch 4's :meth:`CycleService.assert_open` passes through
+        and the accounts importer tests exercise the actuals path
+        instead of short-circuiting on CR-005. Any other model falls
+        through to ``None``.
+        """
+        from app.domain.cycles.models import BudgetCycle, CycleState
+
+        if model is BudgetCycle:
+            now = datetime.now(tz=timezone.utc)
+            stub = BudgetCycle(
+                fiscal_year=2026,
+                deadline=date(2026, 12, 31),
+                reporting_currency="TWD",
+                status=CycleState.open.value,
+                created_by=uuid4(),
+                created_at=now,
+                updated_at=now,
+            )
+            stub.id = pk if isinstance(pk, UUID) else UUID(str(pk))
+            return stub
         return None
 
     # --------------------------------------------------------- execute
