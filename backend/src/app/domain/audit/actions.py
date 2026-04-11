@@ -61,6 +61,10 @@ class AuditAction(StrEnum):
     SHARED_COST_IMPORT = "SHARED_COST_IMPORT"
     SHARED_COST_IMPORT_FAILED = "SHARED_COST_IMPORT_FAILED"
 
+    # --- accounts (M2 — FR-007) --------------------------------------------
+    ACCOUNT_CREATE = "ACCOUNT_CREATE"
+    ACCOUNT_UPDATE = "ACCOUNT_UPDATE"
+
     # --- actuals -----------------------------------------------------------
     ACTUALS_IMPORT = "ACTUALS_IMPORT"
 

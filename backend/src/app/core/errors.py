@@ -6,19 +6,20 @@ code to ``(http_status, default_message_template)``.
 
 Forward dependency note
 -----------------------
-:class:`BatchValidationError` is populated from ``RowError`` instances that live
-in ``app.domain._shared.row_validation`` (introduced in Batch 3). To avoid a
-circular import during Batch 0, this module does **not** import ``RowError``. The
-subclass accepts ``errors: list[dict] | list`` and stores the pre-converted
-dicts in :attr:`AppError.details`. Callers are responsible for producing the
-list-of-dicts form via ``[e.to_dict() for e in result.errors]`` before
-instantiation. A light duck-typed fallback (``getattr(e, "to_dict")``) is applied
-at construction to ease the upgrade path once Batch 3 lands.
+:class:`BatchValidationError` is populated from
+:class:`app.domain._shared.row_validation.RowError` instances (Batch 3).
+To avoid a circular import at module-load time, the type is imported only
+under :data:`typing.TYPE_CHECKING`; at runtime the constructor still
+accepts any object exposing a ``to_dict()`` method (duck-typed fallback)
+or a plain ``list[dict]`` so existing Batch 0–2 callers continue to work.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from app.domain._shared.row_validation import RowError
 
 __all__ = [
     "AppError",
@@ -182,8 +183,9 @@ class BatchValidationError(AppError):
         code: Batch-level code, e.g. ``"UPLOAD_007"``, ``"PERS_004"``,
             ``"SHARED_004"``, ``"ACCOUNT_002"``.
         errors: Row-level errors collected during validation. Accepts a list of
-            ``RowError``-like objects (anything exposing ``to_dict()``) or a
-            plain ``list[dict]``. The constructor normalizes to ``list[dict]``.
+            :class:`~app.domain._shared.row_validation.RowError` instances,
+            duck-typed objects exposing ``to_dict()``, or a plain
+            ``list[dict]``. The constructor normalizes to ``list[dict]``.
         message: Optional override message; the registry default is used by
             default.
     """
@@ -192,7 +194,7 @@ class BatchValidationError(AppError):
         self,
         code: str,
         *,
-        errors: list[Any] | None = None,
+        errors: list[RowError] | list[dict[str, Any]] | list[Any] | None = None,
         message: str | None = None,
     ) -> None:
         normalized: list[dict[str, Any]] = []
