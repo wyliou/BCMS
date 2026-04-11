@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+*.egg-info/
+dist/
+build/
+
+# Env / secrets
+.env
+.env.local
+*.pem
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / frontend (future)
+node_modules/
+frontend/dist/
+
+# Legacy
+process_log.txt
+data/finished/*
+
+# Project runtime data (not committed)
+backend/uploads/
+backend/templates_out/
+backend/exports/
+backend/storage/
