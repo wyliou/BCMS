@@ -1,0 +1,11 @@
+[BCMS] Budget cycle {{ cycle_fiscal_year }} is now open
+
+Dear team,
+
+Budget cycle for fiscal year {{ cycle_fiscal_year }} has been opened.
+
+Submission deadline: {{ deadline }}
+
+Please visit {{ cycle_url }} to begin your submission.
+
+- BCMS

@@ -1,0 +1,8 @@
+[BCMS] Personnel data imported for FY{{ fiscal_year }}
+
+Hello,
+
+Personnel data for fiscal year {{ fiscal_year }} has been imported by
+{{ uploader_name }}. {{ affected_count }} record(s) were affected.
+
+- BCMS

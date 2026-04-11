@@ -1,0 +1,10 @@
+[BCMS] Budget deadline reminder: FY{{ cycle_fiscal_year }} closes in {{ days_remaining }} day(s)
+
+Dear team,
+
+This is a reminder that the budget submission window for fiscal year
+{{ cycle_fiscal_year }} closes on {{ deadline }} ({{ days_remaining }} day(s) remaining).
+
+Please complete your submission at: {{ upload_url }}
+
+- BCMS

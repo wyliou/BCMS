@@ -1,0 +1,13 @@
+[BCMS] Resubmission requested for {{ org_unit_name }} (FY{{ cycle_fiscal_year }})
+
+Dear manager,
+
+A resubmission has been requested for {{ org_unit_name }} in fiscal year
+{{ cycle_fiscal_year }}.
+
+Requested by: {{ requested_by }}
+Reason: {{ reason }}
+
+Please download the latest template and resubmit at: {{ template_url }}
+
+- BCMS

@@ -1,0 +1,11 @@
+[BCMS] Shared cost allocation updated for {{ org_unit_name }} (FY{{ fiscal_year }})
+
+Hello,
+
+Shared cost allocation for {{ org_unit_name }} has been updated for fiscal
+year {{ fiscal_year }}.
+
+Summary of changes:
+{{ diff_summary }}
+
+- BCMS

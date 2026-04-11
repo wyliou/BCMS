@@ -1,0 +1,12 @@
+[BCMS] Budget upload received for {{ org_unit_name }} (v{{ version }})
+
+Hello,
+
+We have received budget upload version {{ version }} for {{ org_unit_name }}.
+
+File: {{ filename }}
+Uploaded at: {{ uploaded_at }}
+
+View or manage the upload: {{ upload_url }}
+
+- BCMS
