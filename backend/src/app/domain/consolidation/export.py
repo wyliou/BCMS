@@ -13,8 +13,6 @@ the workbook is persisted on the sync path).
 
 from __future__ import annotations
 
-import csv
-import io
 from datetime import datetime, timedelta
 from typing import Any, Literal
 from uuid import UUID
@@ -29,9 +27,8 @@ from app.core.errors import AppError, InfraError
 from app.core.security.models import User
 from app.domain.audit.actions import AuditAction
 from app.domain.audit.service import AuditService
+from app.domain.consolidation.renderers import render_report
 from app.domain.consolidation.report import (
-    ConsolidatedReport,
-    ConsolidatedReportRow,
     ConsolidatedReportService,
     ReportScope,
 )
@@ -39,7 +36,6 @@ from app.domain.cycles.models import BudgetCycle
 from app.domain.notifications.templates import NotificationTemplate
 from app.infra import jobs as jobs_module
 from app.infra import storage as storage_module
-from app.infra.excel import workbook_to_bytes, write_workbook
 
 __all__ = [
     "ExportEnqueueResult",
@@ -169,7 +165,7 @@ class ReportExportService:
         """
         try:
             report = await self._report.build(cycle_id=cycle_id, scope=scope)
-            filename, content = _render_report(report=report, export_format=export_format)
+            filename, content = render_report(report=report, export_format=export_format)
             storage_key = await storage_module.save(
                 category="exports",
                 filename=filename,
@@ -318,7 +314,7 @@ class ReportExportHandler:
             try:
                 report_service = ConsolidatedReportService(session)
                 report = await report_service.build(cycle_id=cycle_id, scope=scope)
-                filename, content = _render_report(
+                filename, content = render_report(
                     report=report,
                     export_format=export_format,  # type: ignore[arg-type]
                 )
@@ -420,101 +416,8 @@ class ReportExportHandler:
 
 
 # ---------------------------------------------------------------------------
-# Shared helpers
+# Shared helpers (rendering delegated to renderers.py)
 # ---------------------------------------------------------------------------
-def _render_report(
-    *,
-    report: ConsolidatedReport,
-    export_format: Literal["xlsx", "csv"],
-) -> tuple[str, bytes]:
-    """Serialize ``report`` to the requested ``export_format``.
-
-    Args:
-        report: Source report.
-        export_format: ``"xlsx"`` or ``"csv"``.
-
-    Returns:
-        tuple[str, bytes]: ``(filename, content_bytes)``.
-    """
-    if export_format == "csv":
-        return _render_csv(report)
-    return _render_xlsx(report)
-
-
-_COLUMNS: tuple[str, ...] = (
-    "org_unit_id",
-    "org_unit_name",
-    "account_code",
-    "account_name",
-    "actual",
-    "operational_budget",
-    "personnel_budget",
-    "shared_cost",
-    "delta_amount",
-    "delta_pct",
-    "budget_status",
-)
-
-
-def _render_xlsx(report: ConsolidatedReport) -> tuple[str, bytes]:
-    """Render ``report`` as a minimal ``.xlsx`` workbook.
-
-    Args:
-        report: Source report.
-
-    Returns:
-        tuple[str, bytes]: Filename + workbook bytes.
-    """
-    workbook = write_workbook()
-    sheet = workbook.active
-    assert sheet is not None
-    sheet.title = "consolidated"
-    for col_idx, column in enumerate(_COLUMNS, start=1):
-        sheet.cell(row=1, column=col_idx, value=column)
-    for row_idx, row in enumerate(report.rows, start=2):
-        for col_idx, column in enumerate(_COLUMNS, start=1):
-            value = _row_value(row=row, column=column)
-            sheet.cell(row=row_idx, column=col_idx, value=value)
-    content = workbook_to_bytes(workbook)
-    filename = f"consolidated_{report.cycle_id}.xlsx"
-    return filename, content
-
-
-def _render_csv(report: ConsolidatedReport) -> tuple[str, bytes]:
-    """Render ``report`` as CSV bytes.
-
-    Args:
-        report: Source report.
-
-    Returns:
-        tuple[str, bytes]: Filename + CSV bytes.
-    """
-    buf = io.StringIO()
-    writer = csv.writer(buf)
-    writer.writerow(_COLUMNS)
-    for row in report.rows:
-        writer.writerow([_row_value(row=row, column=column) for column in _COLUMNS])
-    filename = f"consolidated_{report.cycle_id}.csv"
-    return filename, buf.getvalue().encode("utf-8")
-
-
-def _row_value(*, row: ConsolidatedReportRow, column: str) -> Any:
-    """Return the cell value for ``row[column]``.
-
-    Args:
-        row: Source row.
-        column: Column name (one of :data:`_COLUMNS`).
-
-    Returns:
-        Any: Stringified-Decimal / UUID / raw value suitable for
-        workbook and CSV writers.
-    """
-    value = getattr(row, column)
-    if value is None:
-        return ""
-    if isinstance(value, UUID):
-        return str(value)
-    return str(value) if not isinstance(value, (int, float, str)) else value
 
 
 def _coerce_uuid_strings(value: object) -> list[str]:

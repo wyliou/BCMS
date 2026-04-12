@@ -15,7 +15,7 @@ from app.domain.consolidation.dashboard import (
     DashboardStatus,
 )
 from app.domain.consolidation.export import ExportEnqueueResult
-from app.domain.consolidation.report import (
+from app.domain.consolidation.report_models import (
     ConsolidatedReport,
     ConsolidatedReportRow,
     ExportFormat,
