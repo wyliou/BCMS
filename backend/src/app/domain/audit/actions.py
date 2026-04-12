@@ -48,6 +48,7 @@ class AuditAction(StrEnum):
     FILING_UNIT_EXCLUDED = "FILING_UNIT_EXCLUDED"
 
     # --- templates ---------------------------------------------------------
+    TEMPLATE_GENERATE = "TEMPLATE_GENERATE"
     TEMPLATE_DOWNLOAD = "TEMPLATE_DOWNLOAD"
     TEMPLATE_REGENERATE = "TEMPLATE_REGENERATE"
 

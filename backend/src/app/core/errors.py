@@ -64,6 +64,7 @@ ERROR_REGISTRY: dict[str, tuple[int, str]] = {
     # --- Templates (FR-009, FR-010) --------------------------------------
     "TPL_001": (500, "Template generation failed"),
     "TPL_002": (404, "Template has not been generated for this org unit"),
+    "TPL_003": (500, "Template storage read failed"),
     # --- Budget uploads (FR-011, FR-012) ---------------------------------
     "UPLOAD_001": (413, "File size exceeds 10 MB limit"),
     "UPLOAD_002": (400, "Row count exceeds 5000 row limit"),

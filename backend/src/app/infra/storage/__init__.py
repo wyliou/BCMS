@@ -29,7 +29,14 @@ from app.core.errors import InfraError
 __all__ = ["save", "read", "delete", "resolve_path"]
 
 
-_ALLOWED_CATEGORIES = {"uploads", "templates", "exports"}
+_ALLOWED_CATEGORIES = {
+    "uploads",
+    "templates",
+    "exports",
+    "budget_uploads",
+    "personnel",
+    "shared_costs",
+}
 _SAFE_FILENAME_RE = re.compile(r"[^A-Za-z0-9._-]")
 
 
