@@ -45,3 +45,4 @@ class NotificationTemplate(StrEnum):
     DEADLINE_REMINDER = "deadline_reminder"
     PERSONNEL_IMPORTED = "personnel_imported"
     SHARED_COST_IMPORTED = "shared_cost_imported"
+    REPORT_EXPORT_READY = "report_export_ready"

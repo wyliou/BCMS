@@ -1,0 +1,9 @@
+[BCMS] Consolidated report export is ready
+
+Your consolidated report export for cycle {{ cycle_fiscal_year }} is ready.
+
+Download: {{ file_url }}
+Row count: {{ row_count }}
+Expires: {{ expires_at }}
+
+- BCMS

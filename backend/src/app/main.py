@@ -31,9 +31,10 @@ from starlette.types import ASGIApp
 from app.config import get_settings
 from app.core.errors import AppError
 from app.core.logging import bind_request_context, clear_request_context, configure_logging
+from app.domain.consolidation.export import register_report_export_handler
 from app.infra import jobs as jobs_module
 from app.infra import scheduler as scheduler_module
-from app.infra.db.session import configure_engine, dispose_engine
+from app.infra.db.session import configure_engine, dispose_engine, get_session_factory
 
 __all__ = ["app", "create_app"]
 
@@ -159,6 +160,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     configure_logging(settings.log_level)
     configure_engine()
     jobs_module.register_all_handlers()
+    # Reason: Batch 6 — register the report_export handler so async
+    # export jobs can be dispatched by the worker.
+    register_report_export_handler(
+        session_factory=get_session_factory(),
+        notification_factory=lambda _session: None,
+    )
     scheduler_module.start()
     _LOG.info("app.startup", log_level=settings.log_level)
     try:

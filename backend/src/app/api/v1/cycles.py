@@ -252,29 +252,10 @@ async def get_cycle(
     return CycleRead.from_orm_row(row)
 
 
-@router.post("/{cycle_id}/open", response_model=CycleOpenResponse)
-async def open_cycle(
-    cycle_id: UUID,
-    db: AsyncSession = Depends(get_session),
-    user: User = Depends(require_role(Role.SystemAdmin, Role.FinanceAdmin)),
-) -> CycleOpenResponse:
-    """Transition a cycle to Open state (FR-003).
-
-    Args:
-        cycle_id: Target cycle id.
-        db: Injected DB session.
-        user: Acting admin.
-
-    Returns:
-        CycleOpenResponse: Updated cycle + filing unit list.
-    """
-    service = _build_service(db)
-    cycle, _units = await service.open(cycle_id, user)
-    infos = await service.list_filing_units(cycle_id)
-    return CycleOpenResponse(
-        cycle=CycleRead.from_orm_row(cycle),
-        filing_units=[FilingUnitInfoRead.from_info(info) for info in infos],
-    )
+# Reason: ``POST /cycles/{cycle_id}/open`` now lives in
+# :mod:`app.api.v1.orchestrators.open_cycle` — the Batch 6 orchestrator
+# wraps the :class:`CycleService.open` call in the full FR-003 pipeline
+# (template generation + notification dispatch + aggregate summaries).
 
 
 @router.post("/{cycle_id}/close", response_model=CycleRead)

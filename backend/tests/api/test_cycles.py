@@ -13,6 +13,7 @@ import pytest_asyncio
 from fastapi import FastAPI
 
 from app.api.v1.cycles import router as cycles_router
+from app.api.v1.orchestrators.open_cycle import router as open_cycle_router
 from app.core.errors import AppError
 from app.core.security.roles import Role
 from app.domain.cycles.models import CycleState
@@ -33,6 +34,7 @@ def cycles_app() -> FastAPI:
     """Build a FastAPI app that mounts the cycles router on a fake session."""
     application = FastAPI()
     application.include_router(cycles_router, prefix="/api/v1")
+    application.include_router(open_cycle_router, prefix="/api/v1")
     application.add_exception_handler(AppError, _app_error_handler)
     application.add_exception_handler(Exception, _unhandled_exception_handler)
 
@@ -94,10 +96,10 @@ async def test_get_cycles_returns_seeded_rows(
     assert years == {2025, 2026}
 
 
-async def test_open_cycle_returns_filing_units(
+async def test_open_cycle_returns_orchestrator_summary(
     cycles_client: httpx.AsyncClient, cycles_app: FastAPI
 ) -> None:
-    """POST /cycles/{id}/open succeeds and returns the filing unit list."""
+    """POST /cycles/{id}/open runs the Batch 6 orchestrator and returns its summary."""
     session: FakeSession = cycles_app.state._shared_session  # type: ignore[attr-defined]
     unit = make_org_unit(code="4000")
     session.org_units = [unit]
@@ -105,12 +107,34 @@ async def test_open_cycle_returns_filing_units(
     cycle = make_cycle(status=CycleState.draft)
     session.cycles.append(cycle)
 
-    response = await cycles_client.post(f"/api/v1/cycles/{cycle.id}/open")
+    # Reason: the Batch 6 orchestrator delegates Step 3 (template
+    # generation) and Step 4 (notification dispatch) to collaborators
+    # that do not understand the minimal FakeSession used here. Patch
+    # both through the ``open_cycle`` helper so the transition runs
+    # end-to-end without real templates / SMTP.
+    import app.api.v1.orchestrators.open_cycle as oc_module
+    from app.domain.templates.service import TemplateGenerationResult
+
+    async def _fake_generate(**kwargs: Any) -> list[TemplateGenerationResult]:
+        units = kwargs.get("filing_units", [])
+        return [TemplateGenerationResult(org_unit_id=u.id, status="generated") for u in units]
+
+    class _FakeTemplateService:
+        def __init__(self, _db: Any) -> None:
+            pass
+
+        generate_for_cycle = staticmethod(_fake_generate)
+
+    original_ts = oc_module.TemplateService
+    oc_module.TemplateService = _FakeTemplateService  # type: ignore[misc]
+    try:
+        response = await cycles_client.post(f"/api/v1/cycles/{cycle.id}/open")
+    finally:
+        oc_module.TemplateService = original_ts  # type: ignore[misc]
     assert response.status_code == 200
     body = response.json()
+    assert body["transition"] == "draft_to_open"
     assert body["cycle"]["status"] == "open"
-    assert len(body["filing_units"]) == 1
-    assert body["filing_units"][0]["code"] == "4000"
 
 
 async def test_patch_reminder_schedule_empty_disables(

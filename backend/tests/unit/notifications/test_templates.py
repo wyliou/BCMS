@@ -66,6 +66,12 @@ _RENDER_CONTEXTS: dict[NotificationTemplate, dict[str, Any]] = {
         "fiscal_year": 2026,
         "diff_summary": "+3 units, -1 unit",
     },
+    NotificationTemplate.REPORT_EXPORT_READY: {
+        "cycle_fiscal_year": 2026,
+        "file_url": "https://bcms.example/exports/abc.xlsx",
+        "row_count": 42,
+        "expires_at": "2026-04-13T12:00:00+00:00",
+    },
 }
 
 
