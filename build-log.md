@@ -103,3 +103,57 @@ Append-only log of build-from-prd phase transitions, batch results, and recovery
 - Context will be cleared before frontend build. This log + build-plan.md + build-context.md survive as recovery anchors.
 - To resume: `/build-from-prd` will detect the existing backend and produce a frontend-only build plan.
 
+## 2026-04-12 — Frontend Phase 1 / Stage A complete
+- Architect (Plan subagent) read PRD v4.3 + architecture.md + backend router/schemas and produced 3 frontend artifacts.
+- `frontend-build-plan.md`: 2 frontend batches (Batch 7 foundation + Batch 8 feature pages with 3 sub-batches: 8a simple, 8b moderate, 8c complex). 12 pages total (11 architecture screens + User Admin).
+- `frontend-build-context.md`: TS/React conventions, component structure, state management, testing rules, 8 subagent constraints.
+- `frontend-consistency-registry.md`: 13 FCR entries (FCR-001..FCR-013) covering auth transport, role visibility, design tokens, i18n, error display, polling, WCAG AA, file downloads, form validation, loading states, version history, notification dedup, API path correctness.
+- 8 ambiguities flagged. 3 required user decisions:
+  1. User Admin page: YES, added as simple page in Sub-batch 8a.
+  2. Failed notifications: Dashboard section for FinanceAdmin.
+  3. Cycle selector: Auto-select latest Open cycle with dropdown.
+  5 ambiguities resolved with safe defaults (deferred endpoints, export format, resubmit path, accounts upsert, Vite proxy).
+- Task graph: 6 tasks (Stage B Specs → Scaffold → Batch 7 → Batch 8 → Simplify → Validate).
+
+## 2026-04-12 — Frontend Phase 1 / Stage B complete
+- 2 spec-writer subagents (sonnet) ran in parallel: one for Batch 7 (20 specs), one for Batch 8 (12 specs — but some were compacted so agent reported 10).
+- 30 spec files written under `specs/frontend/` covering all Batch 7 foundation modules + all 12 Batch 8 feature pages.
+- Cross-validation: FCR-001..FCR-013 referenced in applicable specs. All FR coverage verified. Import graph resolves.
+
+## 2026-04-12 — Frontend Phase 2 / Scaffold complete
+- Sonnet agent scaffolded `frontend/` directory: package.json, vite.config.ts, tsconfig.json, ESLint 9 flat config, Prettier, Vitest + RTL + MSW setup.
+- pnpm install: all deps installed, lockfile generated.
+- Gates: lint PASS, tsc --noEmit PASS, format:check PASS, test PASS (--passWithNoTests), build PASS (dist/ 142kB).
+- Directory skeleton: pages/, features/, components/, api/, hooks/, stores/, i18n/, styles/, lib/, routes/ + mirrored tests/unit/ structure.
+
+## 2026-04-12 — Batch 7 Frontend Foundation complete
+- Opus agent implemented 17 source modules + 18 test files (83 tests).
+- Modules: theme, i18n, API client, auth API, QueryProvider, auth store, RouteGuard, ShellLayout, routes, LoginPage, ForbiddenPage, NotFoundPage, ErrorBoundary, ErrorDisplay, StatusBadge, download helper, DataTable, App.tsx.
+- Gates: lint PASS, tsc PASS, prettier PASS, 83 tests PASS, build PASS (438kB).
+
+## 2026-04-12 — Batch 8 Feature Pages complete
+- 3 sub-batches ran in parallel:
+  - 8a (haiku): 4 simple pages — AuditLog, OrgTree, AccountMaster, UserAdmin. 20 tests.
+  - 8b (sonnet): 5 moderate pages — CycleAdmin, Upload, PersonnelImport, SharedCostImport, ResubmitModal. 57 tests.
+  - 8c (opus): 2 complex pages — Dashboard (5s polling, summary cards, status grid, failed notifications panel, resubmit trigger), ConsolidatedReport (3-column TanStack Table, sync+async export). 16 tests. Dashboard split into DashboardPage + SummaryCards + StatusGrid + FailedNotificationsPanel sub-components. Report columns in separate reportColumns.ts.
+- All 3 worktrees merged cleanly — no file conflicts (each agent wrote to separate page directories).
+- Post-merge gates: lint 0 errors (2 warnings), tsc PASS, prettier PASS, 140 tests PASS (29 files), build PASS (449kB). Zero files over 500 lines.
+
+## 2026-04-12 — Phase 4 Simplify complete
+- /simplify ran 3 parallel review agents (reuse, quality, efficiency).
+- 9 fixes applied: 401 refresh race condition dedup, duplicate fetchUser removal, dead refresh export, redundant refetch(), useEffect→onClick for verify mutation, memoized audit columns, removed unused _jobId param, extracted formatLocalDateTime utility, renamed duplicate useCycles→useCycleSelector.
+- Low-impact findings (structural comments, useOpenCycle extraction, roles constants) skipped as not worth the churn.
+- Post-simplify gates: lint 0 errors, tsc PASS, prettier PASS, 139 tests PASS, build PASS (449kB).
+
+## 2026-04-12 — Phase 5 Validate complete — Frontend build done
+- Final gates: lint 0 errors (2 warnings), tsc PASS, prettier PASS, 139 tests PASS (29 files), build PASS (449kB gzipped 140kB).
+- FCR registry sweep: FCR-001 (no raw fetch) PASS, FCR-003 (no hardcoded hex) PASS, FCR-004 (no CJK in TSX) PASS, FCR-006 (polling discipline) PASS.
+- Zero files over 500 lines. Zero stubs.
+- Frontend build complete: 2 batches (7-8), 12 pages, 62 source files, 139 tests.
+- Total project: backend (420 tests) + frontend (139 tests) = 559 tests across 17+ commits.
+
+## 2026-04-12 — Batch 7 Frontend Foundation complete
+- Opus agent implemented 17 source modules + 18 test files (83 tests).
+- Modules: theme (7 design tokens), i18n (zh-TW), API client (CSRF + 401 refresh), auth API, QueryProvider, auth store (Zustand), RouteGuard, ShellLayout (role-differentiated nav for 7 roles), routes (10 protected routes), LoginPage, ForbiddenPage, NotFoundPage, ErrorBoundary, ErrorDisplay (envelope + row-level table), StatusBadge (4 statuses), download helper (blob + async polling), DataTable (TanStack + Mantine), App.tsx (provider stack).
+- 10 placeholder pages created for Batch 8 feature routes.
+- Gates on main: lint PASS, tsc PASS, prettier PASS, 83 tests PASS, build PASS (438kB main bundle).

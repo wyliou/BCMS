@@ -1,0 +1,450 @@
+{
+  "common": {
+    "loading": "載入中...",
+    "error": "發生錯誤",
+    "empty": "無資料",
+    "retry": "重試",
+    "logout": "登出",
+    "save": "儲存",
+    "cancel": "取消",
+    "confirm": "確認",
+    "page_size": "每頁筆數",
+    "refresh": "重新整理"
+  },
+  "nav": {
+    "dashboard": "儀表板",
+    "reports": "彙整報表",
+    "upload": "上傳預算",
+    "personnel_import": "人力預算匯入",
+    "shared_cost_import": "公攤費用匯入",
+    "cycle_admin": "週期管理",
+    "account_master": "會科主檔",
+    "org_tree": "組織架構",
+    "user_admin": "使用者管理",
+    "audit_log": "稽核日誌"
+  },
+  "auth": {
+    "login_title": "企業預算蒐集平台",
+    "login_prompt": "請使用企業 SSO 登入",
+    "login_button": "SSO 登入",
+    "unauthorized": "使用者尚未授權",
+    "sso_unavailable": "驗證服務暫時無法使用"
+  },
+  "errors": {
+    "forbidden_title": "無存取權限",
+    "forbidden_message": "您沒有權限存取此頁面",
+    "not_found_title": "找不到頁面",
+    "not_found_message": "您嘗試存取的頁面不存在",
+    "network_error": "連線失敗",
+    "back_home": "回首頁",
+    "boundary_title": "應用程式發生錯誤",
+    "boundary_message": "很抱歉，應用程式遇到了未預期的錯誤。",
+    "show_details": "顯示錯誤詳情",
+    "hide_details": "隱藏錯誤詳情",
+    "detail_row": "列",
+    "detail_column": "欄位",
+    "detail_code": "錯誤代碼",
+    "detail_reason": "說明",
+    "remaining_errors": "及其他 {{count}} 列錯誤",
+    "generic_http": "HTTP 錯誤 {{status}}"
+  },
+  "status": {
+    "not_uploaded": "未上傳",
+    "uploaded": "已上傳",
+    "resubmit": "已通知重傳",
+    "overdue": "逾期未上傳"
+  },
+  "audit": {
+    "columns": {
+      "timestamp": "時間",
+      "user_id": "使用者 ID",
+      "action": "操作",
+      "resource_type": "資源類型",
+      "resource_id": "資源 ID",
+      "ip_address": "IP 位址"
+    },
+    "form": {
+      "user_id": "使用者 ID",
+      "user_id_placeholder": "輸入使用者 ID",
+      "action": "操作",
+      "action_placeholder": "選擇操作",
+      "resource_type": "資源類型",
+      "resource_type_placeholder": "輸入資源類型",
+      "resource_id": "資源 ID",
+      "resource_id_placeholder": "輸入資源 ID",
+      "from": "開始時間",
+      "to": "結束時間"
+    },
+    "buttons": {
+      "search": "搜尋",
+      "verify": "驗證完整性",
+      "export": "匯出 CSV"
+    },
+    "tabs": {
+      "label": "稽核日誌篩選",
+      "filters": "篩選條件"
+    },
+    "table": {
+      "label": "稽核日誌表格"
+    },
+    "empty": {
+      "no_results": "無稽核日誌，請調整日期範圍"
+    },
+    "verify": {
+      "title": "驗證鏈完整性",
+      "status": "驗證結果",
+      "verified": "完整",
+      "corrupted": "已損毀",
+      "chain_length": "鏈長度"
+    }
+  },
+  "org_tree": {
+    "columns": {
+      "code": "代碼",
+      "name": "名稱",
+      "level_code": "層級代碼",
+      "is_filing_unit": "申報單位",
+      "has_manager": "有經理人",
+      "excluded_cycles": "排除週期",
+      "actions": "操作"
+    },
+    "yes": "是",
+    "no": "否",
+    "warning": {
+      "no_manager": "該單位尚未指派經理人"
+    },
+    "info": {
+      "read_only": "您僅具有唯讀權限"
+    },
+    "empty": {
+      "no_units": "無組織單位"
+    },
+    "modal": {
+      "title": "編輯組織單位",
+      "name": "名稱",
+      "excluded_cycles": "排除週期",
+      "excluded_cycles_placeholder": "選擇排除的週期"
+    },
+    "buttons": {
+      "edit": "編輯"
+    },
+    "table": {
+      "label": "組織單位表格"
+    }
+  },
+  "accounts": {
+    "columns": {
+      "code": "帳號代碼",
+      "name": "帳號名稱",
+      "category": "類別",
+      "level": "層級"
+    },
+    "category": {
+      "operational": "營運帳號",
+      "personnel": "人力帳號",
+      "shared_cost": "公攤帳號"
+    },
+    "filter": {
+      "category": "類別",
+      "category_placeholder": "選擇類別"
+    },
+    "form": {
+      "code": "帳號代碼",
+      "code_placeholder": "輸入帳號代碼",
+      "name": "帳號名稱",
+      "name_placeholder": "輸入帳號名稱",
+      "category": "類別",
+      "category_placeholder": "選擇類別",
+      "level": "層級",
+      "level_placeholder": "輸入層級",
+      "cycle_id": "週期 ID",
+      "cycle_id_placeholder": "輸入週期 ID",
+      "file": "檔案",
+      "file_placeholder": "選擇 CSV 或 XLSX 檔案"
+    },
+    "buttons": {
+      "add_account": "新增帳號",
+      "import_actuals": "匯入實績",
+      "import": "匯入"
+    },
+    "modal": {
+      "upsert_title": "新增或編輯帳號",
+      "import_title": "匯入實績"
+    },
+    "empty": {
+      "no_accounts": "無帳號"
+    },
+    "success": {
+      "upserted": "帳號已儲存",
+      "import_completed": "實績匯入完成"
+    },
+    "error": {
+      "file_and_cycle_required": "請選擇檔案並輸入週期 ID"
+    },
+    "table": {
+      "label": "帳號表格"
+    }
+  },
+  "dashboard": {
+    "cycle_selector": "選擇週期",
+    "summary": {
+      "total": "填報單位總數",
+      "uploaded": "已上傳",
+      "not_downloaded": "未下載",
+      "resubmit_requested": "已通知重傳"
+    },
+    "status": {
+      "not_downloaded": "未下載",
+      "downloaded": "已下載",
+      "uploaded": "已上傳",
+      "resubmit_requested": "已通知重傳"
+    },
+    "columns": {
+      "org_unit_id": "單位代碼",
+      "org_unit_name": "單位名稱",
+      "status": "狀態",
+      "last_uploaded_at": "最後上傳時間",
+      "version": "版本",
+      "actions": "操作"
+    },
+    "filter": {
+      "all": "全部",
+      "status_label": "狀態篩選",
+      "org_unit_placeholder": "搜尋單位名稱",
+      "org_unit_label": "單位搜尋"
+    },
+    "actions": {
+      "resubmit": "通知重傳"
+    },
+    "freshness": {
+      "stale": "資料更新中，顯示最後成功快照"
+    },
+    "no_cycle": {
+      "prompt": "尚未開放週期"
+    },
+    "company_reviewer": {
+      "report_link": "請前往彙整報表查看報表"
+    },
+    "empty": "目前無填報單位資料",
+    "table": {
+      "label": "填報狀態表格"
+    },
+    "resubmit": {
+      "title": "通知重傳",
+      "placeholder": "重傳功能尚在建置中 (週期: {{cycleId}}, 單位: {{orgUnitId}})"
+    },
+    "failed_notifications": {
+      "title": "失敗通知",
+      "empty": "無失敗通知",
+      "resend": "重送",
+      "resend_title": "重送通知",
+      "email_label": "收件人電郵"
+    }
+  },
+  "report": {
+    "cycle_selector": "選擇週期",
+    "column_groups": {
+      "operational_budget": "部門營運預算",
+      "personnel_budget": "人力預算",
+      "shared_cost": "公攤費用"
+    },
+    "columns": {
+      "org_unit_id": "單位代碼",
+      "org_unit_name": "單位名稱",
+      "account_code": "會科代碼",
+      "account_name": "會科名稱",
+      "actual": "實績",
+      "operational_budget": "預算",
+      "delta_amount": "增減額",
+      "delta_pct": "增減%",
+      "personnel_budget": "人力預算",
+      "shared_cost": "公攤費用"
+    },
+    "status": {
+      "not_uploaded": "未上傳"
+    },
+    "metadata": {
+      "currency": "幣別",
+      "budget_updated": "預算更新",
+      "personnel_updated": "人力更新",
+      "shared_cost_updated": "公攤更新"
+    },
+    "export": {
+      "button": "匯出",
+      "xlsx": "匯出 Excel",
+      "csv": "匯出 CSV",
+      "async_progress": "正在產生報表..."
+    },
+    "empty": "此週期尚無彙整資料",
+    "table": {
+      "label": "彙整報表表格"
+    }
+  },
+  "users": {
+    "columns": {
+      "name": "名稱",
+      "email": "電郵",
+      "roles": "角色",
+      "is_active": "狀態",
+      "actions": "操作"
+    },
+    "status": {
+      "active": "啟用",
+      "inactive": "停用"
+    },
+    "buttons": {
+      "edit_roles": "編輯角色",
+      "deactivate": "停用帳號"
+    },
+    "modal": {
+      "edit_roles_title": "編輯使用者角色",
+      "user_name": "使用者名稱",
+      "roles": "角色",
+      "roles_placeholder": "選擇角色",
+      "deactivate_title": "確認停用帳號",
+      "deactivate_confirm": "確定要停用 {{name}} 的帳號嗎？此操作無法撤銷。"
+    },
+    "empty": {
+      "no_users": "無使用者"
+    },
+    "success": {
+      "roles_updated": "角色已更新",
+      "deactivated": "帳號已停用"
+    },
+    "table": {
+      "label": "使用者表格"
+    }
+  },
+  "cycle": {
+    "page_title": "預算週期管理",
+    "create_cycle": "建立週期",
+    "no_cycles": "尚未建立任何預算週期",
+    "fiscal_year": "財政年度",
+    "deadline": "截止日期",
+    "reporting_currency": "報帳幣別",
+    "open_cycle": "開放週期",
+    "close_cycle": "關閉週期",
+    "reopen_cycle": "重開週期",
+    "set_reminders": "設定提醒排程",
+    "reminders_days_before": "提前提醒天數",
+    "reminders_hint": "請輸入正整數，以逗號分隔（例：7, 3, 1）",
+    "save_reminders": "儲存提醒設定",
+    "filing_units_check": "填報單位管理員確認",
+    "no_manager_warning": "以下單位尚未指定管理員",
+    "generation_summary": "樣板產生結果",
+    "generation_total": "總計",
+    "generation_generated": "成功",
+    "generation_errors": "失敗",
+    "dispatch_summary": "通知發送結果",
+    "dispatch_sent": "已送出",
+    "dispatch_errors": "失敗",
+    "retry_template": "重試",
+    "confirm_close": "確認關閉週期",
+    "confirm_close_message": "關閉後將不接受新上傳。確認要關閉此週期嗎？",
+    "reopen_reason": "重開原因",
+    "reopen_reason_placeholder": "請說明重開原因",
+    "status": {
+      "draft": "草稿",
+      "open": "已開放",
+      "closed": "已關閉"
+    },
+    "error": {
+      "closed": "週期已關閉",
+      "year_required": "請輸入財政年度",
+      "deadline_required": "請選擇截止日期",
+      "currency_required": "請輸入報帳幣別",
+      "reminders_invalid": "提醒天數必須為正整數",
+      "reopen_reason_required": "請填寫重開原因"
+    },
+    "filing_units_table": {
+      "code": "單位代碼",
+      "name": "單位名稱",
+      "has_manager": "已指定管理員",
+      "excluded": "已排除",
+      "warnings": "警告"
+    }
+  },
+  "upload": {
+    "page_title": "上傳預算檔案",
+    "download_template": "下載樣板",
+    "upload_file": "選擇檔案",
+    "current_status": "目前狀態",
+    "version_history": "上傳紀錄",
+    "no_versions": "尚未上傳任何版本",
+    "no_open_cycle": "目前無開放中的預算週期",
+    "manual_refresh": "重新整理",
+    "upload_success": "上傳成功",
+    "latest_version": "有效版本",
+    "status": {
+      "not_uploaded": "未上傳",
+      "uploaded": "已上傳",
+      "resubmit": "已通知重傳"
+    },
+    "error": {
+      "template_not_found": "此單位的預算樣板尚未產生，請聯繫管理員",
+      "file_too_large": "檔案大小超過 10 MB 限制",
+      "xlsx_only": "僅接受 .xlsx 格式檔案"
+    },
+    "table": {
+      "version": "版本",
+      "uploaded_at": "上傳時間",
+      "row_count": "資料筆數",
+      "file_size": "檔案大小",
+      "status": "狀態",
+      "uploader": "上傳者"
+    }
+  },
+  "personnel_import": {
+    "page_title": "人力預算匯入",
+    "import_file": "選擇匯入檔案",
+    "version_history": "匯入紀錄",
+    "no_versions": "尚未匯入任何人力預算",
+    "no_open_cycle": "目前無開放中的預算週期",
+    "manual_refresh": "重新整理",
+    "import_success": "匯入成功",
+    "file_hint": "接受 .csv 或 .xlsx 格式",
+    "table": {
+      "version": "版本",
+      "uploaded_at": "匯入時間",
+      "filename": "檔案名稱",
+      "file_hash": "檔案雜湊",
+      "affected_units": "異動單位"
+    }
+  },
+  "shared_cost_import": {
+    "page_title": "公攤費用匯入",
+    "import_file": "選擇匯入檔案",
+    "version_history": "匯入紀錄",
+    "no_versions": "尚未匯入任何公攤費用",
+    "no_open_cycle": "目前無開放中的預算週期",
+    "manual_refresh": "重新整理",
+    "import_success": "匯入成功",
+    "file_hint": "接受 .csv 或 .xlsx 格式",
+    "table": {
+      "version": "版本",
+      "uploaded_at": "匯入時間",
+      "filename": "檔案名稱",
+      "affected_units": "異動單位"
+    }
+  },
+  "resubmit": {
+    "modal_title": "通知重傳",
+    "reason_label": "重傳原因",
+    "reason_placeholder": "請說明要求重傳的原因",
+    "target_version_label": "目標版本（選填）",
+    "submit": "送出通知",
+    "cancel": "取消",
+    "history_title": "重傳紀錄",
+    "no_history": "尚無重傳紀錄",
+    "submit_success": "已成功發送重傳通知",
+    "error": {
+      "reason_required": "請填寫重傳原因"
+    },
+    "table": {
+      "requested_at": "通知時間",
+      "reason": "原因",
+      "requester": "通知者",
+      "target_version": "目標版本"
+    }
+  }
+}
