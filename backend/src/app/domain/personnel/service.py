@@ -22,15 +22,19 @@ from app.config import get_settings
 from app.core.clock import now_utc
 from app.core.errors import BatchValidationError, InfraError, NotFoundError
 from app.core.security.models import User
-from app.core.security.roles import Role
 from app.domain._shared.queries import org_unit_code_to_id_map
-from app.domain.accounts.models import AccountCategory, AccountCode
+from app.domain.accounts.models import AccountCategory
 from app.domain.accounts.service import AccountService
 from app.domain.audit.actions import AuditAction
 from app.domain.audit.service import AuditService
 from app.domain.cycles.service import CycleService
 from app.domain.notifications.service import NotificationService
 from app.domain.notifications.templates import NotificationTemplate
+from app.domain.personnel.helpers import (
+    account_code_id_map,
+    build_affected_summary,
+    get_finance_admin_recipients,
+)
 from app.domain.personnel.models import PersonnelBudgetLine, PersonnelBudgetUpload
 from app.domain.personnel.validator import PersonnelImportValidator
 from app.infra import storage as storage_module
@@ -163,10 +167,10 @@ class PersonnelImportService:
 
         # --- 8. Resolve account_code_id map for validated rows ---------
         codes: set[str] = {str(row["account_code"]) for row in result.rows}
-        code_id_map = await _account_code_id_map(self._db, codes=codes)
+        code_id_map = await account_code_id_map(self._db, codes=codes)
 
         # --- 9. Compute affected_org_units_summary ---------------------
-        affected_summary = _build_affected_summary(result.rows)
+        affected_summary = build_affected_summary(result.rows)
 
         # --- 10. Save raw content to storage ---------------------------
         # Reason: storage_key is intentionally discarded; the service
@@ -406,7 +410,7 @@ class PersonnelImportService:
             return
 
         # Resolve FinanceAdmin recipients from Users table.
-        recipients = await _get_finance_admin_recipients(self._db)
+        recipients = await get_finance_admin_recipients(self._db)
         if not recipients:
             _LOG.warning(
                 "personnel_import.notification_skipped",
@@ -435,88 +439,4 @@ class PersonnelImportService:
             )
 
 
-def _build_affected_summary(
-    rows: list[dict[str, Any]],
-) -> list[dict[str, str]]:
-    """Compute the affected_org_units_summary from validated rows.
-
-    Groups rows by org_unit_id and sums amounts per unit.
-
-    Args:
-        rows: Validated rows with ``org_unit_id``, ``account_code``,
-            and ``amount``.
-
-    Returns:
-        list[dict[str, str]]: One entry per distinct org_unit_id
-        containing ``org_unit_id`` and ``total_amount`` as strings.
-    """
-    totals: dict[UUID, Decimal] = {}
-    for row in rows:
-        uid: UUID = row["org_unit_id"]
-        amount: Decimal = row["amount"]
-        totals[uid] = totals.get(uid, Decimal("0")) + amount
-
-    return [{"org_unit_id": str(uid), "total_amount": str(total)} for uid, total in totals.items()]
-
-
-async def _account_code_id_map(
-    db: AsyncSession,
-    *,
-    codes: set[str],
-) -> dict[str, UUID]:
-    """Return a ``{code: id}`` map for the requested account codes.
-
-    Args:
-        db: Active async session.
-        codes: Set of account-code strings to resolve.
-
-    Returns:
-        dict[str, UUID]: Mapping from code string to UUID.
-        Unknown codes are simply absent.
-    """
-    if not codes:
-        return {}
-    stmt = select(AccountCode.code, AccountCode.id).where(AccountCode.code.in_(codes))
-    result = await db.execute(stmt)
-    mapping: dict[str, UUID] = {}
-    for row in result.all():
-        code, code_id = row
-        mapping[code] = code_id
-    return mapping
-
-
-async def _get_finance_admin_recipients(
-    db: AsyncSession,
-) -> list[tuple[UUID, str]]:
-    """Query User rows with FinanceAdmin role and extract email addresses.
-
-    Args:
-        db: Active async session.
-
-    Returns:
-        list[tuple[UUID, str]]: List of ``(user_id, email)`` tuples
-        for every active FinanceAdmin. Email is decoded from ``email_enc``
-        bytes as UTF-8; non-decodable rows are skipped with a WARN.
-    """
-    from app.core.security.models import User as UserModel
-
-    stmt = select(UserModel).where(UserModel.is_active.is_(True))
-    result = await db.execute(stmt)
-    users = list(result.scalars().all())
-
-    recipients: list[tuple[UUID, str]] = []
-    for user in users:
-        if Role.FinanceAdmin.value not in (user.roles or []):
-            continue
-        raw = user.email_enc or b""
-        if not raw:
-            continue
-        try:
-            email = raw.decode("utf-8")
-        except UnicodeDecodeError:
-            _LOG.warning("personnel_import.bad_email_enc", user_id=str(user.id))
-            continue
-        if "@" not in email:
-            continue
-        recipients.append((user.id, email))
-    return recipients
+# Helpers extracted to personnel/helpers.py for the 500-line file limit.

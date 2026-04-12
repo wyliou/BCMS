@@ -12,7 +12,7 @@ from __future__ import annotations
 import hashlib
 from decimal import Decimal
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import structlog
 from sqlalchemy import select
@@ -21,15 +21,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.core.clock import now_utc
 from app.core.errors import AppError, BatchValidationError, InfraError, NotFoundError
-from app.core.security.models import OrgUnit, User
+from app.core.security.models import User
 from app.domain._shared.queries import org_unit_code_to_id_map
-from app.domain.accounts.models import AccountCategory, AccountCode
+from app.domain.accounts.models import AccountCategory
 from app.domain.accounts.service import AccountService
 from app.domain.audit.actions import AuditAction
 from app.domain.audit.service import AuditService
 from app.domain.cycles.service import CycleService
 from app.domain.notifications.service import NotificationService
 from app.domain.notifications.templates import NotificationTemplate
+from app.domain.shared_costs.helpers import (
+    account_code_id_map,
+    aggregate_by_unit,
+    build_lines_data,
+    ephemeral_lines,
+    extract_email,
+    fetch_lines,
+    resolve_manager,
+    resolve_unit_codes,
+)
 from app.domain.shared_costs.models import SharedCostLine, SharedCostUpload
 from app.domain.shared_costs.validator import SharedCostImportValidator, normalize_headers
 from app.infra import storage as storage_module
@@ -182,26 +192,26 @@ class SharedCostImportService:
 
         # --- 9. Resolve account_code → id map ----------------------------
         codes: set[str] = {str(row["account_code"]) for row in result.rows}
-        code_id_map = await _account_code_id_map(self._db, codes=codes)
+        code_id_map = await account_code_id_map(self._db, codes=codes)
 
         # --- 10. Fetch previous version lines for diff -------------------
         prev_upload = await self._get_latest(cycle_id)
         prev_lines: list[SharedCostLine] = []
         if prev_upload is not None:
-            prev_lines = await _fetch_lines(self._db, upload_id=prev_upload.id)
+            prev_lines = await fetch_lines(self._db, upload_id=prev_upload.id)
 
         # --- 11. Build new lines from validated rows ---------------------
-        new_lines_data = _build_lines_data(result.rows, code_id_map)
+        new_lines_data = build_lines_data(result.rows, code_id_map)
 
         # --- 12. Compute diff BEFORE persisting transaction --------------
         # Reason: diff_affected_units is a pure function on Python objects;
         # new_lines are not yet persisted. We construct ephemeral SharedCostLine
         # objects to match the function's signature.
-        ephemeral_new_lines = _ephemeral_lines(new_lines_data)
+        ephemeral_new_lines = ephemeral_lines(new_lines_data)
         affected_unit_ids = diff_affected_units(prev_lines, ephemeral_new_lines)
 
         # --- 13. Compute affected_org_units_summary ----------------------
-        unit_codes = await _resolve_unit_codes(self._db, list(affected_unit_ids))
+        unit_codes = await resolve_unit_codes(self._db, list(affected_unit_ids))
         summary: dict[str, Any] = {
             "unit_count": len(affected_unit_ids),
             "unit_codes": unit_codes,
@@ -311,7 +321,7 @@ class SharedCostImportService:
         upload = await self._get_latest(cycle_id)
         if upload is None:
             return {}
-        lines = await _fetch_lines(self._db, upload_id=upload.id)
+        lines = await fetch_lines(self._db, upload_id=upload.id)
         result: dict[tuple[UUID, UUID], Decimal] = {}
         for line in lines:
             key = (line.org_unit_id, line.account_code_id)
@@ -416,12 +426,12 @@ class SharedCostImportService:
             return
 
         # Build amount lookup maps for context
-        prev_totals = _aggregate_by_unit(prev_lines)
-        new_totals = _aggregate_by_unit(new_lines)
+        prev_totals = aggregate_by_unit(prev_lines)
+        new_totals = aggregate_by_unit(new_lines)
 
         for org_unit_id in affected_unit_ids:
             try:
-                manager = await _resolve_manager(org_unit_id, self._db)
+                manager = await resolve_manager(org_unit_id, self._db)
                 if manager is None:
                     _LOG.warning(
                         "shared_cost.no_manager_found",
@@ -429,7 +439,7 @@ class SharedCostImportService:
                     )
                     continue
 
-                email = _extract_email(manager)
+                email = extract_email(manager)
                 if email is None:
                     _LOG.warning(
                         "shared_cost.manager_no_email",
@@ -467,204 +477,4 @@ class SharedCostImportService:
                 )
 
 
-# ============================================================
-#               Module-level pure / DB helpers
-# ============================================================
-
-
-def _build_lines_data(
-    rows: list[dict[str, Any]],
-    code_id_map: dict[str, UUID],
-) -> list[dict[str, Any]]:
-    """Translate validated rows into line dicts with resolved UUIDs.
-
-    Args:
-        rows: Validated row dicts from :class:`SharedCostImportValidator`.
-        code_id_map: ``{account_code: UUID}`` resolved from ``account_codes``.
-
-    Returns:
-        list[dict[str, Any]]: Dicts with ``org_unit_id``, ``account_code_id``,
-        ``amount``.
-    """
-    result: list[dict[str, Any]] = []
-    for row in rows:
-        code = str(row["account_code"])
-        account_code_id = code_id_map.get(code)
-        if account_code_id is None:
-            # Reason: defensive — code was validated against shared_cost_codes
-            # set. If it's missing from code_id_map, the account master was
-            # mutated mid-request. Skip gracefully; DB constraint will catch it.
-            _LOG.warning("shared_cost.account_code_not_in_map", code=code)
-            continue
-        result.append(
-            {
-                "org_unit_id": row["org_unit_id"],
-                "account_code_id": account_code_id,
-                "amount": row["amount"],
-            }
-        )
-    return result
-
-
-def _ephemeral_lines(lines_data: list[dict[str, Any]]) -> list[SharedCostLine]:
-    """Construct ephemeral (not-yet-persisted) SharedCostLine objects.
-
-    Used by :func:`diff_affected_units` before the persisting transaction so
-    the diff computation works on Python objects, not committed DB rows.
-
-    Args:
-        lines_data: Pre-resolved line dicts.
-
-    Returns:
-        list[SharedCostLine]: Ephemeral ORM instances (no id set).
-    """
-    lines: list[SharedCostLine] = []
-    upload_placeholder = uuid4()
-    for data in lines_data:
-        line = SharedCostLine(
-            upload_id=upload_placeholder,
-            org_unit_id=data["org_unit_id"],
-            account_code_id=data["account_code_id"],
-            amount=data["amount"],
-        )
-        lines.append(line)
-    return lines
-
-
-def _aggregate_by_unit(lines: list[SharedCostLine]) -> dict[UUID, Decimal]:
-    """Aggregate line amounts by org_unit_id.
-
-    Args:
-        lines: SharedCostLine rows.
-
-    Returns:
-        dict[UUID, Decimal]: Summed amounts per org unit.
-    """
-    totals: dict[UUID, Decimal] = {}
-    for line in lines:
-        totals[line.org_unit_id] = totals.get(line.org_unit_id, Decimal("0")) + line.amount
-    return totals
-
-
-async def _fetch_lines(
-    db: AsyncSession,
-    *,
-    upload_id: UUID,
-) -> list[SharedCostLine]:
-    """Return all lines for a given upload.
-
-    Args:
-        db: Active async session.
-        upload_id: Target :class:`SharedCostUpload` UUID.
-
-    Returns:
-        list[SharedCostLine]: All lines for the upload.
-    """
-    stmt = select(SharedCostLine).where(SharedCostLine.upload_id == upload_id)
-    result = await db.execute(stmt)
-    return list(result.scalars().all())
-
-
-async def _account_code_id_map(
-    db: AsyncSession,
-    *,
-    codes: set[str],
-) -> dict[str, UUID]:
-    """Return a ``{code: id}`` map for the requested account codes.
-
-    Args:
-        db: Active async session.
-        codes: Set of account-code strings to resolve.
-
-    Returns:
-        dict[str, UUID]: Mapping; unknown codes are absent.
-    """
-    if not codes:
-        return {}
-    stmt = select(AccountCode.code, AccountCode.id).where(AccountCode.code.in_(codes))
-    result = await db.execute(stmt)
-    mapping: dict[str, UUID] = {}
-    for row in result.all():
-        code, code_id = row
-        mapping[code] = code_id
-    return mapping
-
-
-async def _resolve_manager(
-    org_unit_id: UUID,
-    db: AsyncSession,
-) -> User | None:
-    """Walk the org-unit parent chain to find a manager user.
-
-    Searches for a user whose ``org_unit_id`` matches any ancestor (including
-    the unit itself) and has a managerial role (FinanceAdmin, HRAdmin,
-    FilingUnitManager, UplineReviewer, SystemAdmin). Returns the first match
-    walking up from ``org_unit_id``. Returns ``None`` if no manager is found.
-
-    Args:
-        org_unit_id: Starting org unit UUID.
-        db: Active async session.
-
-    Returns:
-        User | None: Manager user, or ``None`` when not found.
-    """
-    visited: set[UUID] = set()
-    current_id: UUID | None = org_unit_id
-    while current_id is not None and current_id not in visited:
-        visited.add(current_id)
-        # Find a user assigned to this org unit
-        stmt = select(User).where(
-            User.org_unit_id == current_id,
-            User.is_active.is_(True),
-        )
-        result = await db.execute(stmt)
-        user = result.scalars().first()
-        if user is not None:
-            return user
-        # Walk up to parent
-        unit = await db.get(OrgUnit, current_id)
-        if unit is None:
-            break
-        current_id = unit.parent_id
-    return None
-
-
-async def _resolve_unit_codes(
-    db: AsyncSession,
-    unit_ids: list[UUID],
-) -> list[str]:
-    """Resolve a list of org_unit UUIDs to their codes.
-
-    Args:
-        db: Active async session.
-        unit_ids: List of org unit UUIDs.
-
-    Returns:
-        list[str]: Corresponding org unit codes (in no guaranteed order).
-    """
-    if not unit_ids:
-        return []
-    stmt = select(OrgUnit.code).where(OrgUnit.id.in_(unit_ids))
-    result = await db.execute(stmt)
-    return [row[0] for row in result.all()]
-
-
-def _extract_email(user: User) -> str | None:
-    """Best-effort email decode for notification dispatch.
-
-    Args:
-        user: User whose email is being resolved.
-
-    Returns:
-        str | None: Decoded email, or ``None`` when decoding fails.
-    """
-    raw = user.email_enc or b""
-    if not raw:
-        return None
-    try:
-        text = raw.decode("utf-8")
-    except UnicodeDecodeError:
-        return None
-    if "@" not in text:
-        return None
-    return text
+# Helpers extracted to shared_costs/helpers.py for the 500-line file limit.
