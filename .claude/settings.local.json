@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker run:*)",
+      "Bash(uv sync:*)",
+      "Bash(export BC_DATABASE_URL=\"postgresql+asyncpg://bcms:bcms@localhost:5432/bcms_test\")",
+      "Bash(uv run:*)",
+      "Bash(pnpm install:*)",
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "Bash(npm install:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(python:*)",
+      "Bash(export BC_CRYPTO_KEY=\"44daeb2a4fc4c3082ceeaa461fd6b1baaefc73ac548a0e313ebcdb3c0af0cf85\")",
+      "Bash(export BC_AUDIT_HMAC_KEY=\"dd9ceb37dac73ab40781e011606e3e09037d0a2b4cab3e453510dd3547245937\")",
+      "Bash(export BC_API_BASE_URL=\"http://localhost:5174\")",
+      "Bash(export BC_FRONTEND_ORIGIN=\"http://localhost:5174\")",
+      "Bash(tasklist)",
+      "Bash(taskkill:*)",
+      "Bash(curl:*)",
+      "Bash(netstat -ano)",
+      "Bash(PGPASSWORD=bcms psql -h localhost -U bcms -d bcms_test -c \"\\\\d audit_logs\" 2>&1)",
+      "Bash(docker exec:*)"
+    ]
+  }
+}
