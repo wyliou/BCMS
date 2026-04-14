@@ -31,7 +31,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, LargeBinary, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.security.roles import Role
-from app.domain.audit.models import GUID, JSONDict
+from app.domain.audit.models import GUID, JSONDict, _INETString
 from app.infra.db.base import Base
 
 __all__ = ["User", "Session", "OrgUnit"]
@@ -162,7 +162,7 @@ class Session(Base):
     user_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
     refresh_token_hash: Mapped[bytes] = mapped_column(LargeBinary(), nullable=False, unique=True)
     csrf_token: Mapped[str] = mapped_column(String(64), nullable=False)
-    ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ip_address: Mapped[str | None] = mapped_column(_INETString(), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(Text(), nullable=True)
     last_activity_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     absolute_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

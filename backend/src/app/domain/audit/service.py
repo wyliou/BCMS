@@ -327,7 +327,7 @@ class AuditService:
             "action": row.action,
             "resource_type": row.resource_type,
             "resource_id": str(row.resource_id) if row.resource_id else None,
-            "ip_address": row.ip_address,
+            "ip_address": str(row.ip_address) if row.ip_address else None,
             "details": row.details,
             "occurred_at": occurred_at.isoformat(),
         }

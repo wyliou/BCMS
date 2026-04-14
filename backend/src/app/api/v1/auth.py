@@ -30,7 +30,7 @@ from app.core.security.auth_service import (
 from app.core.security.cookies import clear_session_cookies, set_session_cookies
 from app.core.security.models import User
 from app.infra.db.session import get_session
-from app.infra.sso import OIDCClient, SSOClient
+from app.infra.sso import FakeSSO, OIDCClient, SSOClient
 
 __all__ = ["router", "WhoAmIResponse", "get_sso_client"]
 
@@ -48,8 +48,12 @@ def get_sso_client() -> SSOClient:
     to inject :class:`~app.infra.sso.FakeSSO`.
 
     Returns:
-        SSOClient: Production :class:`OIDCClient`, or a fake during tests.
+        SSOClient: Production :class:`OIDCClient`, or :class:`FakeSSO`
+        when no SSO issuer is configured (local dev).
     """
+    settings = get_settings()
+    if not (settings.sso_issuer or settings.sso_discovery_url):
+        return FakeSSO()
     return OIDCClient()
 
 
@@ -116,10 +120,10 @@ async def sso_login(return_to: str = Query(default="/")) -> RedirectResponse:
     if base:
         url = f"{base.rstrip('/')}/authorize?{urlencode(params)}"
     else:
-        # Reason: local/dev installs without a real IdP still want the
-        # route to return a deterministic 302 so integration smoke tests
-        # don't blow up; the URL points at the app's own callback.
-        url = f"{settings.api_base_url}/api/v1/auth/sso/callback?{urlencode(params)}"
+        # Dev mode: no real IdP — redirect straight to our own callback
+        # with a fake code so FakeSSO can handle the exchange.
+        callback_params = {"code": "dev", "state": return_to}
+        url = f"{settings.api_base_url}/api/v1/auth/sso/callback?{urlencode(callback_params)}"
     return RedirectResponse(url=url, status_code=302)
 
 

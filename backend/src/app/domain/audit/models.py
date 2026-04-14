@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import BigInteger, DateTime, LargeBinary, String
+from sqlalchemy import BigInteger, DateTime, LargeBinary, String, text
 from sqlalchemy.dialects.postgresql import INET, JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -171,8 +171,8 @@ class AuditLog(Base):
     sequence_no: Mapped[int] = mapped_column(
         BigInteger(),
         unique=True,
-        autoincrement=True,
         nullable=False,
+        server_default=text("nextval('audit_logs_sequence_no_seq')"),
     )
     user_id: Mapped[UUID | None] = mapped_column(
         GUID(),

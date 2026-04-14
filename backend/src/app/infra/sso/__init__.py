@@ -199,7 +199,7 @@ class FakeSSO:
             "sub": "user-1",
             "email": "user@example.invalid",
             "name": "Test User",
-            "groups": [],
+            "groups": ["BCMS_ADMIN"],
         }
     )
     should_fail_auth_001: bool = False
